@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Bons de Crédit — بون كريدي</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo for Arabic, Inter for French) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', 'Cairo', sans-serif;
+            background-color: #eef2f5;
+            color: #1f2937;
+        }
+
+        .font-arabic {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        /* Voucher Custom Border & Colors */
+        .voucher-card {
+            background-color: #ffffff;
+            border: 2px solid #b91c1c;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            break-inside: avoid;
+            page-break-inside: avoid;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .border-red-custom {
+            border-color: #b91c1c;
+        }
+
+        .bg-yellow-header {
+            background-color: #ffcc00;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            #vouchers-container {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 8px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            .voucher-card {
+                box-shadow: none !important;
+                border: 2px solid #000000 !important;
+                max-width: 100% !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin-bottom: 5px !important;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
+            }
+        }
+
+        /* Custom Checkbox Styling */
+        input[type="checkbox"] {
+            accent-color: #b91c1c;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .voucher-input {
+            border: 1px solid #94a3b8;
+            border-radius: 6px;
+            padding: 2px 6px;
+            width: 100%;
+            background-color: #f8fafc;
+            outline: none;
+            transition: all 0.15s ease;
+            font-size: 0.85rem;
+        }
+
+        .voucher-input:focus {
+            border-color: #b91c1c;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.15);
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-4 min-h-screen">
+
+    <!-- TOP CONTROL PANEL (NO-PRINT) -->
+    <div class="no-print max-w-5xl mx-auto bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-gray-200">
+        <!-- Title Bar -->
+        <div class="text-center mb-5">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight flex items-center justify-center gap-3">
+                <span>BON DE CRÉDIT</span>
+                <span class="text-red-700">—</span>
+                <span class="font-arabic text-red-700 text-3xl">بون كريدي</span>
+            </h1>
+        </div>
+
+        <!-- Preset Quick Selection Buttons -->
+        <div class="flex flex-wrap justify-center items-center gap-3 mb-5">
+            <button onclick="setPrintCount(1)" class="px-5 py-2 rounded-lg border-2 border-red-600 text-red-700 font-bold hover:bg-red-50 transition shadow-sm font-arabic text-lg">
+                بون واحد (1)
+            </button>
+            <button onclick="setPrintCount(100)" class="px-5 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold transition shadow-sm font-arabic text-lg">
+                100 بون مرقمين
+            </button>
+            <button onclick="setPrintCount(200)" class="px-5 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold transition shadow-sm font-arabic text-lg">
+                200 بون مرقمين
+            </button>
+            <button onclick="setPrintCount(300)" class="px-5 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold transition shadow-sm font-arabic text-lg">
+                أكثر من 100
+            </button>
+            
+            <div class="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-lg p-1.5 px-3">
+                <span class="text-sm font-medium text-gray-600 font-arabic">عدد آخر :</span>
+                <input type="number" id="customCountInput" value="3" min="1" max="1000" onchange="setCustomCount(this.value)" class="w-20 text-center font-bold border border-gray-300 rounded py-1 text-gray-800">
+            </div>
+
+            <button onclick="window.print()" class="px-6 py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-bold transition shadow-md flex items-center gap-2 text-lg">
+                <i class="fa-solid fa-print"></i>
+                <span class="font-arabic">طباعة</span>
+            </button>
+        </div>
+
+        <!-- Range Selection Controls & Format -->
+        <div class="bg-amber-50 border-2 border-dashed border-red-300 rounded-xl p-4 mb-4">
+            <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 font-arabic text-base font-bold text-gray-800">
+                <div class="flex items-center gap-2">
+                    <label for="fromIndex">من :</label>
+                    <input type="number" id="fromIndex" value="1" min="1" onchange="updateVouchersFromInputs()" class="w-24 text-center border-2 border-red-500 rounded-md py-1 bg-white font-sans text-lg">
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <label for="toIndex">إلى :</label>
+                    <input type="number" id="toIndex" value="3" min="1" onchange="updateVouchersFromInputs()" class="w-24 text-center border-2 border-red-500 rounded-md py-1 bg-white font-sans text-lg">
+                </div>
+
+                <button onclick="updateVouchersFromInputs()" class="px-6 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-md border border-yellow-600 transition">
+                    عرض من - إلى
+                </button>
+            </div>
+
+            <!-- Calculated Voucher Code Range Display -->
+            <div class="text-center mt-3 pt-2 border-t border-amber-200 text-gray-700 font-medium dir-rtl">
+                <span>1000 بون : من </span>
+                <span id="rangeDisplayStart" class="font-bold text-red-700 font-mono">BCR-2026/10/0001</span>
+                <span> إلى </span>
+                <span id="rangeDisplayEnd" class="font-bold text-red-700 font-mono">BCR-2026/10/0003</span>
+            </div>
+        </div>
+
+        <!-- Global Batch Fill Settings (Helper to quickly pre-populate forms) -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleGlobalFill()">
+                <span class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-red-600"></i>
+                    Remplissage rapide (Remplir tous les bons à la fois)
+                </span>
+                <i id="globalFillChevron" class="fa-solid fa-chevron-down text-gray-500"></i>
+            </div>
+            
+            <div id="globalFillPanel" class="hidden mt-3 pt-3 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                    <label class="block text-gray-600 mb-1">Nom Société / الشركة</label>
+                    <input type="text" id="globalCompany" oninput="applyGlobalField('company', this.value)" placeholder="Ex: Transport Atlas" class="w-full border rounded px-2 py-1">
+                </div>
+                <div>
+                    <label class="block text-gray-600 mb-1">Matricule / الشاحنة</label>
+                    <input type="text" id="globalMatricule" oninput="applyGlobalField('matricule', this.value)" placeholder="Ex: 12345-A-6" class="w-full border rounded px-2 py-1">
+                </div>
+                <div>
+                    <label class="block text-gray-600 mb-1">Chauffeur / السائق</label>
+                    <input type="text" id="globalChauffeur" oninput="applyGlobalField('chauffeur', this.value)" placeholder="Ex: Ahmed" class="w-full border rounded px-2 py-1">
+                </div>
+                <div>
+                    <label class="block text-gray-600 mb-1">Autorisé par / الترخيص</label>
+                    <input type="text" id="globalAuth" oninput="applyGlobalField('auth', this.value)" placeholder="Ex: Direction" class="w-full border rounded px-2 py-1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN VOUCHERS CONTAINER GRID -->
+    <div id="vouchers-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        <!-- Vouchers will be rendered dynamically here -->
+    </div>
+
+    <script>
+        // Prefix and Current Year/Month setup
+        const PREFIX = "BCR-2026/10/";
+        let currentStart = 1;
+        let currentEnd = 3;
+
+        // Initialize App
+        window.onload = function() {
+            renderVouchers(currentStart, currentEnd);
+        };
+
+        // Format index into 4-digit zero padded string e.g., 1 -> "0001"
+        function padNumber(num) {
+            return String(num).padStart(4, '0');
+        }
+
+        // Set preset print count
+        function setPrintCount(count) {
+            document.getElementById('fromIndex').value = 1;
+            document.getElementById('toIndex').value = count;
+            document.getElementById('customCountInput').value = count;
+            updateVouchersFromInputs();
+        }
+
+        // Set custom count
+        function setCustomCount(val) {
+            const count = parseInt(val) || 1;
+            const from = parseInt(document.getElementById('fromIndex').value) || 1;
+            document.getElementById('toIndex').value = from + count - 1;
+            updateVouchersFromInputs();
+        }
+
+        // Read inputs and re-render vouchers
+        function updateVouchersFromInputs() {
+            let from = parseInt(document.getElementById('fromIndex').value) || 1;
+            let to = parseInt(document.getElementById('toIndex').value) || 1;
+
+            if (from < 1) from = 1;
+            if (to < from) to = from;
+
+            document.getElementById('fromIndex').value = from;
+            document.getElementById('toIndex').value = to;
+            document.getElementById('customCountInput').value = (to - from + 1);
+
+            currentStart = from;
+            currentEnd = to;
+
+            // Update range text header
+            document.getElementById('rangeDisplayStart').textContent = `${PREFIX}${padNumber(from)}`;
+            document.getElementById('rangeDisplayEnd').textContent = `${PREFIX}${padNumber(to)}`;
+
+            renderVouchers(from, to);
+        }
+
+        // Render Vouchers function
+        function renderVouchers(start, end) {
+            const container = document.getElementById('vouchers-container');
+            container.innerHTML = '';
+
+            for (let i = start; i <= end; i++) {
+                const codeNumber = `${PREFIX}${padNumber(i)}`;
+                const voucherCard = createVoucherHTML(codeNumber, i);
+                container.appendChild(voucherCard);
+            }
+        }
+
+        // Generate Single Voucher Card Element
+        function createVoucherHTML(voucherCode, index) {
+            const card = document.createElement('div');
+            card.className = "voucher-card rounded-lg overflow-hidden flex flex-col text-gray-900";
+            card.setAttribute('data-voucher-id', index);
+
+            // Read global field values if any
+            const globalComp = document.getElementById('globalCompany')?.value || '';
+            const globalMat = document.getElementById('globalMatricule')?.value || '';
+            const globalChauf = document.getElementById('globalChauffeur')?.value || '';
+            const globalAuth = document.getElementById('globalAuth')?.value || '';
+
+            card.innerHTML = `
+                <!-- 1. Header Banner -->
+                <div class="bg-yellow-header p-2 text-center border-b-2 border-red-700 flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-gas-pump text-red-700 text-3xl"></i>
+                    <div class="flex flex-col leading-tight">
+                        <span class="font-arabic font-extrabold text-2xl text-red-700">بون كريدي</span>
+                        <span class="font-extrabold text-xl text-red-700 tracking-wider">BON DE CRÉDIT</span>
+                    </div>
+                </div>
+
+                <div class="p-2 flex-grow flex flex-col gap-2 text-xs">
+                    <!-- 2. Serial Number Badge & Date -->
+                    <div class="flex items-center justify-between gap-2 border-b border-gray-200 pb-1.5">
+                        <div class="bg-red-700 text-white font-bold font-mono px-3 py-1 rounded-md text-sm tracking-wide shadow-sm">
+                            ${voucherCode}
+                        </div>
+                        <div class="flex items-center gap-1 font-bold text-gray-700 font-arabic text-sm">
+                            <span>Date / التاريخ :</span>
+                            <input type="text" placeholder="...................." class="w-32 bg-transparent border-b border-gray-400 text-center font-mono focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 3. Company Name Field -->
+                    <div class="border border-blue-900 rounded-md p-1 bg-white">
+                        <div class="flex justify-between items-center px-1 font-bold text-blue-950 mb-0.5 text-[11px]">
+                            <span>Nom société</span>
+                            <span class="font-arabic text-sm">اسم الشركة</span>
+                        </div>
+                        <input type="text" data-field="company" value="${globalComp}" class="voucher-input text-gray-800 font-medium">
+                    </div>
+
+                    <!-- 4. Truck Registration & Driver -->
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div class="border border-blue-900 rounded-md p-1 bg-white">
+                            <div class="flex justify-between items-center px-1 font-bold text-blue-950 mb-0.5 text-[11px]">
+                                <span>Matricule</span>
+                                <span class="font-arabic">رقم الشاحنة</span>
+                            </div>
+                            <input type="text" data-field="matricule" value="${globalMat}" class="voucher-input">
+                        </div>
+                        <div class="border border-blue-900 rounded-md p-1 bg-white">
+                            <div class="flex justify-between items-center px-1 font-bold text-blue-950 mb-0.5 text-[11px]">
+                                <span>Chauffeur</span>
+                                <span class="font-arabic">اسم السائق</span>
+                            </div>
+                            <input type="text" data-field="chauffeur" value="${globalChauf}" class="voucher-input">
+                        </div>
+                    </div>
+
+                    <!-- 5. Services Selection Section -->
+                    <div class="border border-blue-900 rounded-md p-1 bg-white grid grid-cols-12 gap-1">
+                        <!-- Left Box: Carburant / Fuel -->
+                        <div class="col-span-6 border-r border-gray-300 pr-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between font-bold text-blue-950 border-b border-gray-200 pb-1 mb-1">
+                                    <div class="flex items-center gap-1">
+                                        <i class="fa-solid fa-gas-pump text-sm"></i>
+                                        <span>Carburant</span>
+                                    </div>
+                                    <span class="font-arabic">الوقود</span>
+                                </div>
+                                <div class="flex items-center justify-around my-1.5">
+                                    <label class="flex items-center gap-1 cursor-pointer font-bold text-gray-800">
+                                        <input type="checkbox">
+                                        <span>SSP</span>
+                                    </label>
+                                    <label class="flex items-center gap-1 cursor-pointer font-bold text-gray-800">
+                                        <input type="checkbox">
+                                        <span class="text-[11px]">Gasoil / <span class="font-arabic">كازوال</span></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-1 mt-1">
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold text-gray-700">
+                                        <span>Quantité</span>
+                                        <span class="font-arabic">الكمية</span>
+                                    </div>
+                                    <input type="text" class="voucher-input text-center">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold text-gray-700">
+                                        <span>Prix</span>
+                                        <span class="font-arabic">الثمن</span>
+                                    </div>
+                                    <input type="text" class="voucher-input text-center">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Oil, Lavage, Graissage -->
+                        <div class="col-span-6 flex flex-col gap-1 pl-0.5">
+                            <!-- Oil Box -->
+                            <div class="bg-amber-100/70 border border-amber-300 rounded p-1 flex items-center justify-between">
+                                <div class="flex items-center gap-1 font-bold text-amber-950">
+                                    <i class="fa-solid fa-droplet text-amber-900"></i>
+                                    <span>Oil</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-arabic font-bold text-amber-950">زيت</span>
+                                    <input type="checkbox">
+                                </div>
+                            </div>
+
+                            <!-- Lavage Box -->
+                            <div class="bg-sky-100/70 border border-sky-300 rounded p-1 flex items-center justify-between">
+                                <div class="flex items-center gap-1 font-bold text-sky-950">
+                                    <i class="fa-solid fa-car-wash text-sky-800"></i>
+                                    <span>Lavage</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-arabic font-bold text-sky-950">غسيل</span>
+                                    <input type="checkbox">
+                                </div>
+                            </div>
+
+                            <!-- Graissage Box -->
+                            <div class="bg-emerald-100/70 border border-emerald-300 rounded p-1 flex items-center justify-between">
+                                <div class="flex items-center gap-1 font-bold text-emerald-950">
+                                    <i class="fa-solid fa-oil-can text-emerald-800"></i>
+                                    <span>Graissage</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-arabic font-bold text-emerald-950">تشحيم</span>
+                                    <input type="checkbox">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Total Row -->
+                    <div class="border border-red-600 rounded-md p-1 bg-white flex items-center justify-between">
+                        <span class="font-extrabold text-red-700 text-sm">Total</span>
+                        <div class="flex-grow mx-2 border-b-2 border-dotted border-red-400 h-2"></div>
+                        <span class="font-arabic font-extrabold text-red-700 text-base">المجموع</span>
+                        <div class="bg-red-700 text-white font-bold px-2 py-0.5 rounded text-xs ml-2">Total</div>
+                    </div>
+
+                    <!-- 7. Authorization & Amount -->
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div class="border border-blue-900 rounded-md p-1 bg-white">
+                            <div class="flex justify-between items-center px-1 font-bold text-blue-950 mb-0.5 text-[11px]">
+                                <span>Autorisé par</span>
+                                <span class="font-arabic"> الترخيص</span>
+                            </div>
+                            <input type="text" data-field="auth" value="${globalAuth}" class="voucher-input">
+                        </div>
+                        <div class="border border-blue-900 rounded-md p-1 bg-white">
+                            <div class="flex justify-between items-center px-1 font-bold text-blue-950 mb-0.5 text-[11px]">
+                                <span>Montant (DH)</span>
+                                <span class="font-arabic">المبلغ</span>
+                            </div>
+                            <input type="text" class="voucher-input font-bold text-red-700 text-center">
+                        </div>
+                    </div>
+
+                    <!-- 8. Signatures Section -->
+                    <div class="grid grid-cols-2 gap-1.5 mt-0.5">
+                        <div class="border border-blue-900 rounded-md p-1 bg-white h-20 flex flex-col justify-between">
+                            <div class="flex justify-between items-center px-1 font-bold text-blue-950 text-[10px]">
+                                <span>Signature Chauffeur</span>
+                                <span class="font-arabic">إمضاء السائق</span>
+                            </div>
+                            <div class="text-center text-gray-300 text-xs italic font-light pb-1">Emplacement signature</div>
+                        </div>
+                        <div class="border border-blue-900 rounded-md p-1 bg-white h-20 flex flex-col justify-between">
+                            <div class="flex justify-between items-center px-1 font-bold text-blue-950 text-[10px]">
+                                <span>Signature Agent</span>
+                                <span class="font-arabic">إمضاء العامل</span>
+                            </div>
+                            <div class="text-center text-gray-300 text-xs italic font-light pb-1">Emplacement signature</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9. Footer Banner Notice -->
+                <div class="bg-yellow-header p-1.5 border-t-2 border-red-700 text-center flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-stamp text-red-700 text-xl"></i>
+                    <div class="flex flex-col text-red-700 font-extrabold leading-tight">
+                        <span class="font-arabic text-sm">هذا البون مرقم ولا يقبل بدون ختم</span>
+                        <span class="text-[10px] tracking-tight">Ce bon numéroté n'est valable qu'avec cachet</span>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Toggle global batch fill options panel
+        function toggleGlobalFill() {
+            const panel = document.getElementById('globalFillPanel');
+            const chevron = document.getElementById('globalFillChevron');
+            panel.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // Apply a value globally to all current rendered vouchers
+        function applyGlobalField(fieldName, value) {
+            const inputs = document.querySelectorAll(`input[data-field="${fieldName}"]`);
+            inputs.forEach(input => {
+                input.value = value;
+            });
+        }
+    </script>
+</body>
+</html>
