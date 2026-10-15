@@ -183,5 +183,17 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:18px}
   body{background:#fff}
 }
 /* Responsive */
-@media(max-width:900px){.stats{grid-template-columns:1fr 1fr}.topbar{padding:14px 16px}.brand h1{font-size:20px}}
-@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}.shift-grid{grid-template-columns:1fr}}
+/* Phone: planning like PC — same wide table with horizontal scroll, no squeezing */
+@media(max-width:900px){
+  .stats{grid-template-columns:1fr 1fr}
+  .topbar{padding:14px 16px}
+  .brand h1{font-size:20px}
+  .container{padding:14px 8px}
+  .table-scroll{overflow-x:auto !important;-webkit-overflow-scrolling:touch}
+  #planTable{min-width:980px !important;table-layout:fixed}
+  #planTable th.worker-col{min-width:96px}
+  #planTable .cell-btn{font-size:11px}
+  #planTable .day-cell{position:sticky;inset-inline-start:0;z-index:3;box-shadow:2px 0 0 rgba(0,0,0,.06)}
+  #noubaTable{min-width:900px !important}
+}
+@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}.shift-grid{grid-template-columns:1fr}.brand h1{font-size:18px}#planTable{min-width:980px !important}.toolbar{padding:10px}.tool-btns .btn{padding:9px 12px;font-size:13px}}
